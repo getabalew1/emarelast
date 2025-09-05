@@ -24,6 +24,7 @@ export function Elections() {
   const [loading, setLoading] = useState(true);
   const [votedElections, setVotedElections] = useState(new Set());
   const [showNewElectionForm, setShowNewElectionForm] = useState(false);
+  const [votingInProgress, setVotingInProgress] = useState(false);
   const [newElection, setNewElection] = useState({
     title: "",
     description: "",
@@ -230,7 +231,12 @@ export function Elections() {
       return;
     }
 
+    if (votingInProgress) {
+      return; // Prevent multiple votes while processing
+    }
+
     try {
+      setVotingInProgress(true);
       await apiService.voteInElection(electionId, candidateId);
       setVotedElections(new Set([...votedElections, electionId]));
       await fetchElections();
@@ -239,6 +245,8 @@ export function Elections() {
     } catch (error) {
       console.error("Failed to vote:", error);
       toast.error(error.message || "Failed to cast vote");
+    } finally {
+      setVotingInProgress(false);
     }
   };
 
@@ -915,7 +923,7 @@ export function Elections() {
                               {(candidate.votes || 0).toLocaleString()}
                             </p>
                             <p className="text-sm text-gray-500">votes</p>
-                            {user?.isAdmin && (
+                            {user?.isAdmin && selectedElection.totalVotes > 0 && (
                               <p className="text-xs text-gray-400 mt-1">
                                 {((candidate.votes || 0) / Math.max(selectedElection.totalVotes, 1) * 100).toFixed(1)}%
                               </p>
@@ -932,8 +940,13 @@ export function Elections() {
                             onClick={() =>
                               handleVote(selectedElection._id || selectedElection.id, candidate._id || candidate.id)
                             }
-                            className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                            Vote for {candidate.name}
+                            disabled={votingInProgress}
+                            className={`w-full mt-4 py-2 px-4 rounded-lg font-medium transition-colors ${
+                              votingInProgress 
+                                ? "bg-gray-400 text-gray-600 cursor-not-allowed" 
+                                : "bg-blue-600 text-white hover:bg-blue-700"
+                            }`}>
+                            {votingInProgress ? "Processing..." : `Vote for ${candidate.name}`}
                           </motion.button>
                         )}
                       </div>
@@ -943,20 +956,29 @@ export function Elections() {
                   )}
                 </div>
                 
-                {user?.isAdmin && selectedElection.status === "completed" && (
+                {user?.isAdmin && (selectedElection.status === "completed" || selectedElection.status === "active") && (
                   <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">Election Results</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                      {selectedElection.status === "completed" ? "Final Results" : "Current Vote Count"}
+                    </h4>
                     <div className="space-y-2">
                       {selectedElection.candidates
                         ?.sort((a, b) => (b.votes || 0) - (a.votes || 0))
                         .map((candidate, index) => (
                           <div key={index} className="flex justify-between items-center">
-                            <span className="font-medium">{candidate.name}</span>
+                            <div className="flex items-center space-x-2">
+                              {index === 0 && selectedElection.status === "completed" && (
+                                <span className="text-yellow-500">👑</span>
+                              )}
+                              <span className="font-medium">{candidate.name}</span>
+                            </div>
                             <div className="text-right">
                               <span className="font-bold">{candidate.votes || 0} votes</span>
-                              <span className="text-sm text-gray-500 ml-2">
-                                ({((candidate.votes || 0) / Math.max(selectedElection.totalVotes, 1) * 100).toFixed(1)}%)
-                              </span>
+                              {selectedElection.totalVotes > 0 && (
+                                <span className="text-sm text-gray-500 ml-2">
+                                  ({((candidate.votes || 0) / Math.max(selectedElection.totalVotes, 1) * 100).toFixed(1)}%)
+                                </span>
+                              )}
                             </div>
                           </div>
                         ))}
