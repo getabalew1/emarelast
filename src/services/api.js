@@ -122,7 +122,8 @@ class ApiService {
   }
 
   async getClub(id) {
-    return this.request(`/clubs/${id}`);
+    const response = await this.request(`/clubs/${id}`);
+    return response.club || response;
   }
 
   async createClub(clubData) {

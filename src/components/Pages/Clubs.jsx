@@ -411,7 +411,7 @@ export function Clubs() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Website URL
+                      Website URL (optional)
                     </label>
                     <input
                       type="url"
@@ -818,7 +818,7 @@ export function Clubs() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-gray-900">
-                    {selectedClubDetails.name} - Members
+                    {selectedClubDetails.name} - Club Details
                   </h2>
                   <button
                     onClick={() => setShowClubDetails(false)}
@@ -827,7 +827,7 @@ export function Clubs() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-3">Club Information</h3>
                     <div className="space-y-2 text-sm">
@@ -850,20 +850,73 @@ export function Clubs() {
                       {selectedClubDetails.officeLocation && (
                         <p><span className="font-medium">Office:</span> {selectedClubDetails.officeLocation}</p>
                       )}
+                      {selectedClubDetails.website && (
+                        <p>
+                          <span className="font-medium">Website:</span> 
+                          <a href={selectedClubDetails.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
+                            {selectedClubDetails.website}
+                          </a>
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6">
+                <div className="mb-6">
                   <h3 className="font-semibold text-gray-900 mb-3">Description</h3>
                   <p className="text-gray-600 text-sm">{selectedClubDetails.description}</p>
                 </div>
 
-                <div className="mt-6 flex justify-center">
+                {/* Club Members List */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Club Members</h3>
+                  {selectedClubDetails.members && selectedClubDetails.members.length > 0 ? (
+                    <div className="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                      <div className="space-y-3">
+                        {selectedClubDetails.members
+                          .filter(member => member.status === 'approved')
+                          .map((member, index) => (
+                            <div key={index} className="flex items-center justify-between bg-white p-3 rounded-lg">
+                              <div>
+                                <p className="font-medium text-gray-900">{member.fullName}</p>
+                                <p className="text-sm text-gray-600">
+                                  Username: {member.user?.username || 'N/A'}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {member.department} - {member.year}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                                  member.role === 'president' ? 'bg-blue-100 text-blue-800' :
+                                  member.role === 'officer' ? 'bg-purple-100 text-purple-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {member.role}
+                                </span>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Joined: {new Date(member.joinedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">No approved members yet</p>
+                  )}
+                </div>
+
+                <div className="flex justify-center space-x-4">
                   <button
                     onClick={() => fetchJoinRequests(selectedClubDetails._id || selectedClubDetails.id)}
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                     View Join Requests
+                  </button>
+                  <button
+                    onClick={() => setShowClubDetails(false)}
+                    className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    Close
                   </button>
                 </div>
               </div>
