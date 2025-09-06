@@ -866,7 +866,7 @@ export function Elections() {
                   </div>
                 </div>
 
-                {votedElections.has(selectedElection._id || selectedElection.id) && (
+                {!user?.isAdmin && votedElections.has(selectedElection._id || selectedElection.id) && (
                   <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-green-800 font-medium flex items-center">
                       <CheckCircle className="w-5 h-5 mr-2" />
@@ -931,9 +931,10 @@ export function Elections() {
                           </div>
                         </div>
                         
+                        {/* Only show vote button for students, not admins */}
                         {selectedElection.status === "active" && 
                          !votedElections.has(selectedElection._id || selectedElection.id) && 
-                         !user?.isAdmin && (
+                         !user?.isAdmin && user && (
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
@@ -956,6 +957,37 @@ export function Elections() {
                   )}
                 </div>
                 
+                {/* Admin: Show Voters List */}
+                {user?.isAdmin && selectedElection.voters && selectedElection.voters.length > 0 && (
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <h4 className="font-semibold text-blue-900 mb-4">
+                      Voters List ({selectedElection.voters.length} total votes)
+                    </h4>
+                    <div className="max-h-60 overflow-y-auto space-y-2">
+                      {selectedElection.voters.map((voter, index) => (
+                        <div key={index} className="flex justify-between items-center bg-white p-3 rounded-lg">
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {voter.user?.name || `Voter ${index + 1}`}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Username: {voter.user?.username || 'N/A'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-gray-600">
+                              Voted: {new Date(voter.votedAt).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(voter.votedAt).toLocaleTimeString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {user?.isAdmin && (selectedElection.status === "completed" || selectedElection.status === "active") && (
                   <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                     <h4 className="font-semibold text-gray-900 mb-2">

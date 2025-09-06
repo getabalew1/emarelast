@@ -250,6 +250,31 @@ export function Clubs() {
     }
   };
 
+  const handleRemoveMember = async (clubId, memberId) => {
+    if (!user?.isAdmin) {
+      toast.error("Only admins can remove members");
+      return;
+    }
+
+    if (!confirm("Are you sure you want to remove this member from the club?")) {
+      return;
+    }
+
+    try {
+      // For now, we'll use the reject endpoint to remove the member
+      await apiService.rejectClubMember(clubId, memberId);
+      toast.success("Member removed successfully!");
+      
+      // Refresh club details
+      const updatedClub = await apiService.getClub(clubId);
+      setSelectedClubDetails(updatedClub);
+      await fetchClubs(); // Also refresh the main clubs list
+    } catch (error) {
+      console.error("Failed to remove member:", error);
+      toast.error("Failed to remove member");
+    }
+  };
+
   const handleDeleteClub = async (clubId) => {
     if (!user?.isAdmin) {
       toast.error("Only admins can delete clubs");
@@ -835,6 +860,14 @@ export function Clubs() {
                       <p><span className="font-medium">Founded:</span> {selectedClubDetails.founded}</p>
                       <p><span className="font-medium">Total Members:</span> {selectedClubDetails.members || 0}</p>
                       <p><span className="font-medium">Status:</span> {selectedClubDetails.status}</p>
+                      {selectedClubDetails.website && (
+                        <p>
+                          <span className="font-medium">Website:</span> 
+                          <a href={selectedClubDetails.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
+                            {selectedClubDetails.website}
+                          </a>
+                        </p>
+                      )}
                     </div>
                   </div>
                   
@@ -849,14 +882,6 @@ export function Clubs() {
                       )}
                       {selectedClubDetails.officeLocation && (
                         <p><span className="font-medium">Office:</span> {selectedClubDetails.officeLocation}</p>
-                      )}
-                      {selectedClubDetails.website && (
-                        <p>
-                          <span className="font-medium">Website:</span> 
-                          <a href={selectedClubDetails.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
-                            {selectedClubDetails.website}
-                          </a>
-                        </p>
                       )}
                     </div>
                   </div>
@@ -880,20 +905,28 @@ export function Clubs() {
                               <div>
                                 <p className="font-medium text-gray-900">{member.fullName}</p>
                                 <p className="text-sm text-gray-600">
-                                  Username: {member.user?.username || 'N/A'}
+                                  Username: {member.user?.username || member.username || 'N/A'}
                                 </p>
                                 <p className="text-sm text-gray-600">
                                   {member.department} - {member.year}
                                 </p>
                               </div>
                               <div className="text-right">
-                                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                                  member.role === 'president' ? 'bg-blue-100 text-blue-800' :
-                                  member.role === 'officer' ? 'bg-purple-100 text-purple-800' :
-                                  'bg-gray-100 text-gray-800'
-                                }`}>
-                                  {member.role}
-                                </span>
+                                <div className="flex items-center space-x-2">
+                                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                                    member.role === 'president' ? 'bg-blue-100 text-blue-800' :
+                                    member.role === 'officer' ? 'bg-purple-100 text-purple-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {member.role}
+                                  </span>
+                                  <button
+                                    onClick={() => handleRemoveMember(selectedClubDetails._id || selectedClubDetails.id, member._id)}
+                                    className="text-red-600 hover:text-red-700 p-1 rounded"
+                                    title="Remove member">
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
                                 <p className="text-xs text-gray-500 mt-1">
                                   Joined: {new Date(member.joinedAt).toLocaleDateString()}
                                 </p>

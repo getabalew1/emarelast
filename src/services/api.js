@@ -175,6 +175,12 @@ class ApiService {
     });
   }
 
+  async removeClubMember(clubId, memberId) {
+    return this.request(`/clubs/${clubId}/members/${memberId}`, {
+      method: 'DELETE'
+    });
+  }
+
   async getClubStats() {
     return this.request('/clubs/stats/overview');
   }
